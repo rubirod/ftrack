@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import * as at from '../services/airtable.js'
-import { analyzePhoto } from '../services/anthropic.js'
 import * as queue from '../services/queue.js'
 import { getSettings, saveSettings, isConfigured, clearAll } from '../services/storage.js'
 import { todayStr, nowTime } from '../lib/date.js'
@@ -176,7 +175,7 @@ export function StoreProvider({ children }) {
     settings, configured, date, today, saved, loading, online, toast, sheet,
     setSheet, showToast, refresh,
     addEntry, removeEntry, useDish, addDish, removeDish,
-    updateSettings, wipe, analyzePhoto,
+    updateSettings, wipe,
   }
   return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>
 }
