@@ -32,6 +32,12 @@ function parseResult(text) {
 // Многоходовой диалог: фото живёт в первом сообщении пользователя,
 // дальше идут текстовые реплики. turns — [{ role, text }], где первая запись
 // пользователя несёт исходный контекст (может быть пустым).
+//
+// Кэширование: фото пересылается на каждом ходу и стоит дорого в токенах,
+// поэтому ставим cache_control на первое сообщение (system + image кэшируются
+// и переиспользуются всеми последующими ходами) и второй, скользящий брейкпоинт
+// на последнем сообщении (растущая история диалога). Кэш — префиксный: первый
+// запрос пишет, остальные читают за ~0.1× цены.
 export async function chatNutrition({ base64, turns }) {
   const { anthropicKey } = getSettings()
   if (!anthropicKey) throw new Error('Не задан ANTHROPIC_API_KEY')
@@ -41,12 +47,21 @@ export async function chatNutrition({ base64, turns }) {
       const content = [
         { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64 } },
       ]
-      if (t.text) content.push({ type: 'text', text: t.text })
-      else content.push({ type: 'text', text: 'Оцени по фото.' })
+      content.push({ type: 'text', text: t.text || 'Оцени по фото.' })
       return { role: 'user', content }
     }
     return { role: t.role, content: [{ type: 'text', text: t.text }] }
   })
+
+  // Брейкпоинт на последнем блоке сообщения (мутирует объект блока).
+  const markLast = (msg) => {
+    const block = msg.content[msg.content.length - 1]
+    block.cache_control = { type: 'ephemeral' }
+  }
+  // 1) первое сообщение: кэшируем system + фото — стабильный префикс диалога
+  markLast(messages[0])
+  // 2) последнее сообщение: кэшируем накопленную историю (если это не то же)
+  if (messages.length > 1) markLast(messages[messages.length - 1])
 
   const res = await fetch(URL, {
     method: 'POST',
@@ -64,6 +79,10 @@ export async function chatNutrition({ base64, turns }) {
     throw new Error(`Anthropic ${res.status}: ${body.slice(0, 200)}`)
   }
   const data = await res.json()
+  // Для отладки: cache_read_input_tokens > 0 на втором+ ходе = кэш работает.
+  if (data?.usage) {
+    console.debug('anthropic usage', data.usage)
+  }
   const text = data?.content?.[0]?.text || ''
   return parseResult(text)
 }
