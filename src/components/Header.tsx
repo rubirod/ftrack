@@ -1,6 +1,6 @@
-import { useStore } from '../state/store.jsx'
-import { humanDate } from '../lib/date.js'
-import MacroBar from './MacroBar.jsx'
+import { useStore } from '../state/store'
+import { humanDate } from '../lib/date'
+import MacroBar from './MacroBar'
 
 export default function Header() {
   const { date, today, settings, setSheet } = useStore()

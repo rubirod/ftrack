@@ -5,7 +5,12 @@
 const MAX_DIM = 1568
 const QUALITY = 0.8
 
-export function fileToJpegBase64(file) {
+export interface PreparedImage {
+  base64: string
+  previewUrl: string
+}
+
+export function fileToJpegBase64(file: File): Promise<PreparedImage> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file)
     const img = new Image()
@@ -20,6 +25,10 @@ export function fileToJpegBase64(file) {
       canvas.width = width
       canvas.height = height
       const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        reject(new Error('Canvas не поддерживается'))
+        return
+      }
       ctx.drawImage(img, 0, 0, width, height)
 
       const dataUrl = canvas.toDataURL('image/jpeg', QUALITY)

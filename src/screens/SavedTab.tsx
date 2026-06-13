@@ -1,14 +1,22 @@
-import { useStore } from '../state/store.jsx'
+import type { MouseEvent } from 'react'
+import { useStore } from '../state/store'
+import type { SavedDish } from '../types'
 
-export default function SavedTab({ onAddDish, onPicked }) {
+export default function SavedTab({
+  onAddDish,
+  onPicked,
+}: {
+  onAddDish: () => void
+  onPicked: () => void
+}) {
   const { saved, useDish, removeDish } = useStore()
 
-  function pick(dish) {
+  function pick(dish: SavedDish) {
     useDish(dish)
-    onPicked?.()
+    onPicked()
   }
 
-  function del(e, dish) {
+  function del(e: MouseEvent, dish: SavedDish) {
     e.stopPropagation()
     if (confirm(`Удалить «${dish.name}» из сохранённых?`)) removeDish(dish.id)
   }

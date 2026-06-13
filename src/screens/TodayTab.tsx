@@ -1,4 +1,4 @@
-import { useStore } from '../state/store.jsx'
+import { useStore } from '../state/store'
 
 export default function TodayTab() {
   const { today, removeEntry } = useStore()

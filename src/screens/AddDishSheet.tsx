@@ -1,13 +1,25 @@
-import { useState } from 'react'
-import { useStore } from '../state/store.jsx'
-import Sheet from '../components/Sheet.jsx'
+import { useState, type ChangeEvent } from 'react'
+import { useStore } from '../state/store'
+import Sheet from '../components/Sheet'
 
-const EMPTY = { name: '', emoji: '🍽️', calories: '', protein: '', fat: '', carbs: '' }
+interface Form {
+  name: string
+  emoji: string
+  calories: string
+  protein: string
+  fat: string
+  carbs: string
+}
 
-export default function AddDishSheet({ onClose }) {
+const EMPTY: Form = { name: '', emoji: '🍽️', calories: '', protein: '', fat: '', carbs: '' }
+
+export default function AddDishSheet({ onClose }: { onClose: () => void }) {
   const { addDish, showToast } = useStore()
-  const [v, setV] = useState(EMPTY)
-  const set = (k) => (e) => setV({ ...v, [k]: e.target.value })
+  const [v, setV] = useState<Form>(EMPTY)
+  const set =
+    (k: keyof Form) =>
+    (e: ChangeEvent<HTMLInputElement>) =>
+      setV({ ...v, [k]: e.target.value })
 
   async function save() {
     if (!v.name.trim()) {

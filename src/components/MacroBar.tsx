@@ -1,8 +1,18 @@
 // Цели по макросам берём грубо из стандартного сплита 30/30/40 от 2000 ккал.
 const TARGETS = { p: 150, f: 67, c: 200 }
-const round = (n) => Math.round(n * 10) / 10
+const round = (n: number) => Math.round(n * 10) / 10
 
-function Cell({ label, value, target, color }) {
+function Cell({
+  label,
+  value,
+  target,
+  color,
+}: {
+  label: string
+  value: number
+  target: number
+  color: string
+}) {
   const pct = Math.min(100, (value / target) * 100)
   return (
     <div className="macro">
@@ -18,7 +28,7 @@ function Cell({ label, value, target, color }) {
   )
 }
 
-export default function MacroBar({ p, f, c }) {
+export default function MacroBar({ p, f, c }: { p: number; f: number; c: number }) {
   return (
     <div className="macrobar">
       <Cell label="Белки" value={p} target={TARGETS.p} color="var(--protein)" />

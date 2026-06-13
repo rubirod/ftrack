@@ -1,29 +1,72 @@
-import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
-import * as at from '../services/airtable.js'
-import * as queue from '../services/queue.js'
-import { getSettings, saveSettings, isConfigured, clearAll } from '../services/storage.js'
-import { todayStr, nowTime } from '../lib/date.js'
-import { DEFAULT_DISHES } from '../lib/defaults.js'
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  type ReactNode,
+} from 'react'
+import * as at from '../services/airtable'
+import * as queue from '../services/queue'
+import { getSettings, saveSettings, isConfigured, clearAll } from '../services/storage'
+import { todayStr, nowTime } from '../lib/date'
+import { DEFAULT_DISHES } from '../lib/defaults'
+import type {
+  Settings,
+  LogEntry,
+  SavedDish,
+  DishInput,
+  AddEntryInput,
+  SheetKind,
+} from '../types'
 
-const StoreCtx = createContext(null)
-export const useStore = () => useContext(StoreCtx)
+interface Store {
+  settings: Settings
+  configured: boolean
+  date: string
+  today: LogEntry[]
+  saved: SavedDish[]
+  loading: boolean
+  online: boolean
+  toast: string | null
+  sheet: SheetKind
+  setSheet: (s: SheetKind) => void
+  showToast: (msg: string) => void
+  refresh: () => Promise<void>
+  addEntry: (input: AddEntryInput) => Promise<void>
+  removeEntry: (id: string) => Promise<void>
+  useDish: (dish: SavedDish) => Promise<void>
+  addDish: (dish: DishInput) => Promise<boolean>
+  removeDish: (id: string) => Promise<void>
+  updateSettings: (s: Settings) => void
+  wipe: () => void
+}
+
+const StoreCtx = createContext<Store | null>(null)
+
+export function useStore(): Store {
+  const ctx = useContext(StoreCtx)
+  if (!ctx) throw new Error('useStore вне StoreProvider')
+  return ctx
+}
 
 let tmpId = 0
 const nextTmp = () => `tmp_${++tmpId}`
 
-export function StoreProvider({ children }) {
-  const [settings, setSettings] = useState(getSettings)
-  const [configured, setConfigured] = useState(() => isConfigured())
-  const [date] = useState(todayStr())
-  const [today, setToday] = useState([])
-  const [saved, setSaved] = useState([])
+export function StoreProvider({ children }: { children: ReactNode }) {
+  const [settings, setSettings] = useState<Settings>(getSettings)
+  const [configured, setConfigured] = useState<boolean>(() => isConfigured())
+  const [date] = useState<string>(todayStr())
+  const [today, setToday] = useState<LogEntry[]>([])
+  const [saved, setSaved] = useState<SavedDish[]>([])
   const [loading, setLoading] = useState(false)
   const [online, setOnline] = useState(navigator.onLine)
-  const [toast, setToast] = useState(null)
-  const [sheet, setSheet] = useState(null) // null | 'settings' | 'photo' | 'addDish'
-  const toastTimer = useRef(null)
+  const [toast, setToast] = useState<string | null>(null)
+  const [sheet, setSheet] = useState<SheetKind>(null)
+  const toastTimer = useRef<ReturnType<typeof setTimeout>>()
 
-  const showToast = useCallback((msg) => {
+  const showToast = useCallback((msg: string) => {
     setToast(msg)
     clearTimeout(toastTimer.current)
     toastTimer.current = setTimeout(() => setToast(null), 1800)
@@ -76,18 +119,18 @@ export function StoreProvider({ children }) {
 
   // ---- добавление записи в лог (оптимистично) ----
   const addEntry = useCallback(
-    async ({ dish, calories, protein, fat, carbs, source }) => {
+    async ({ dish, calories, protein, fat, carbs, source }: AddEntryInput) => {
       const entry = {
         dish,
         date: todayStr(),
         time: nowTime(),
-        calories: Math.round(calories) || 0,
+        calories: Math.round(Number(calories)) || 0,
         protein: Number(protein) || 0,
         fat: Number(fat) || 0,
         carbs: Number(carbs) || 0,
         source,
       }
-      const tmp = { ...entry, id: nextTmp(), pending: true }
+      const tmp: LogEntry = { ...entry, id: nextTmp(), pending: true }
       setToday((cur) => [...cur, tmp])
       showToast(`+${entry.calories} ккал`)
 
@@ -103,9 +146,9 @@ export function StoreProvider({ children }) {
     [showToast],
   )
 
-  const removeEntry = useCallback(async (id) => {
+  const removeEntry = useCallback(async (id: string) => {
     setToday((cur) => cur.filter((e) => e.id !== id))
-    if (String(id).startsWith('tmp_')) return
+    if (id.startsWith('tmp_')) return
     try {
       await at.deleteLog(id)
     } catch (e) {
@@ -115,7 +158,7 @@ export function StoreProvider({ children }) {
 
   // ---- использование сохранённого блюда ----
   const useDish = useCallback(
-    async (dish) => {
+    async (dish: SavedDish) => {
       await addEntry({
         dish: dish.name,
         calories: dish.calories,
@@ -136,7 +179,7 @@ export function StoreProvider({ children }) {
   )
 
   // ---- сохранённые блюда ----
-  const addDish = useCallback(async (dish) => {
+  const addDish = useCallback(async (dish: DishInput): Promise<boolean> => {
     try {
       const created = await at.createSaved({ ...dish, uses: 0 })
       setSaved((cur) => [...cur, created].sort((a, b) => b.uses - a.uses))
@@ -147,7 +190,7 @@ export function StoreProvider({ children }) {
     }
   }, [])
 
-  const removeDish = useCallback(async (id) => {
+  const removeDish = useCallback(async (id: string) => {
     setSaved((cur) => cur.filter((d) => d.id !== id))
     try {
       await at.deleteSaved(id)
@@ -157,7 +200,7 @@ export function StoreProvider({ children }) {
   }, [])
 
   // ---- настройки ----
-  const updateSettings = useCallback((s) => {
+  const updateSettings = useCallback((s: Settings) => {
     saveSettings(s)
     setSettings(getSettings())
     setConfigured(isConfigured())
@@ -171,7 +214,7 @@ export function StoreProvider({ children }) {
     setToday([])
   }, [])
 
-  const value = {
+  const value: Store = {
     settings, configured, date, today, saved, loading, online, toast, sheet,
     setSheet, showToast, refresh,
     addEntry, removeEntry, useDish, addDish, removeDish,

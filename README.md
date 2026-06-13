@@ -4,13 +4,15 @@
 подтверждение → запись в Airtable. Тёмная тема, работает как PWA на iPhone.
 
 ## Стек
-React + Vite · Airtable REST API · Anthropic Vision (`claude-sonnet-4-6`) ·
+React + TypeScript + Vite · Airtable REST API · Anthropic Vision (`claude-sonnet-4-6`) ·
 vite-plugin-pwa · GitHub Pages.
 
 ## Локальный запуск
 ```bash
 npm install
-npm run dev
+npm run dev        # дев-сервер
+npm run typecheck  # проверка типов (tsc -b)
+npm run build      # tsc -b + vite build
 ```
 
 ## Настройка (вводится в приложении, ⚙️)

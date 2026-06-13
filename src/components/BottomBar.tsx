@@ -1,11 +1,11 @@
-import { useRef } from 'react'
+import { useRef, type ChangeEvent } from 'react'
 
 // Фиксированная нижняя панель с кнопкой съёмки.
 // capture="environment" открывает заднюю камеру на телефоне.
-export default function BottomBar({ onPhoto }) {
-  const inputRef = useRef(null)
+export default function BottomBar({ onPhoto }: { onPhoto: (file: File) => void }) {
+  const inputRef = useRef<HTMLInputElement>(null)
 
-  function onChange(e) {
+  function onChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     e.target.value = '' // позволяет выбрать тот же файл повторно
     if (file) onPhoto(file)

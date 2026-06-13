@@ -1,22 +1,23 @@
 import { useState } from 'react'
-import { useStore } from './state/store.jsx'
-import Header from './components/Header.jsx'
-import TabBar from './components/TabBar.jsx'
-import BottomBar from './components/BottomBar.jsx'
-import Toast from './components/Toast.jsx'
-import TodayTab from './screens/TodayTab.jsx'
-import SavedTab from './screens/SavedTab.jsx'
-import HistoryTab from './screens/HistoryTab.jsx'
-import SettingsSheet from './screens/SettingsSheet.jsx'
-import PhotoSheet from './screens/PhotoSheet.jsx'
-import AddDishSheet from './screens/AddDishSheet.jsx'
+import { useStore } from './state/store'
+import Header from './components/Header'
+import TabBar from './components/TabBar'
+import BottomBar from './components/BottomBar'
+import Toast from './components/Toast'
+import TodayTab from './screens/TodayTab'
+import SavedTab from './screens/SavedTab'
+import HistoryTab from './screens/HistoryTab'
+import SettingsSheet from './screens/SettingsSheet'
+import PhotoSheet from './screens/PhotoSheet'
+import AddDishSheet from './screens/AddDishSheet'
+import type { TabKind } from './types'
 
 export default function App() {
   const { configured, online, sheet, setSheet } = useStore()
-  const [tab, setTab] = useState('today')
-  const [photoFile, setPhotoFile] = useState(null)
+  const [tab, setTab] = useState<TabKind>('today')
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
 
-  function onPhoto(file) {
+  function onPhoto(file: File) {
     setPhotoFile(file)
     setSheet('photo')
   }

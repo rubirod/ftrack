@@ -1,13 +1,20 @@
 import { useEffect, useState } from 'react'
-import { useStore } from '../state/store.jsx'
-import { listRecentLog } from '../services/airtable.js'
-import { shortDate, humanDate } from '../lib/date.js'
-import Sheet from '../components/Sheet.jsx'
+import { useStore } from '../state/store'
+import { listRecentLog } from '../services/airtable'
+import { shortDate, humanDate } from '../lib/date'
+import Sheet from '../components/Sheet'
+import type { LogEntry } from '../types'
+
+interface DayGroup {
+  date: string
+  entries: LogEntry[]
+  kcal: number
+}
 
 export default function HistoryTab() {
   const { settings } = useStore()
-  const [days, setDays] = useState(null)
-  const [open, setOpen] = useState(null)
+  const [days, setDays] = useState<DayGroup[] | null>(null)
+  const [open, setOpen] = useState<DayGroup | null>(null)
 
   useEffect(() => {
     let alive = true
@@ -15,11 +22,11 @@ export default function HistoryTab() {
       .then((rows) => {
         if (!alive) return
         // группируем по дате
-        const byDate = {}
+        const byDate: Record<string, LogEntry[]> = {}
         for (const r of rows) {
           ;(byDate[r.date] ||= []).push(r)
         }
-        const list = Object.keys(byDate)
+        const list: DayGroup[] = Object.keys(byDate)
           .sort((a, b) => b.localeCompare(a))
           .slice(0, 30)
           .map((date) => ({

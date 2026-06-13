@@ -1,25 +1,45 @@
-import { useEffect, useRef, useState } from 'react'
-import { useStore } from '../state/store.jsx'
-import { fileToJpegBase64 } from '../services/image.js'
-import { chatNutrition } from '../services/anthropic.js'
-import Sheet from '../components/Sheet.jsx'
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
+import { useStore } from '../state/store'
+import { fileToJpegBase64 } from '../services/image'
+import { chatNutrition } from '../services/anthropic'
+import Sheet from '../components/Sheet'
+import type { ChatTurn } from '../types'
 
-const EMPTY = { name: '', calories: '', protein: '', fat: '', carbs: '' }
+interface Form {
+  name: string
+  calories: number | string
+  protein: number | string
+  fat: number | string
+  carbs: number | string
+}
 
-export default function PhotoSheet({ file, onClose, onAdded }) {
+const EMPTY: Form = { name: '', calories: '', protein: '', fat: '', carbs: '' }
+
+export default function PhotoSheet({
+  file,
+  onClose,
+  onAdded,
+}: {
+  file: File
+  onClose: () => void
+  onAdded: () => void
+}) {
   const { addEntry, addDish, settings } = useStore()
-  const [preview, setPreview] = useState(null)
-  const [base64, setBase64] = useState(null)
+  const [preview, setPreview] = useState<string | null>(null)
+  const [base64, setBase64] = useState<string | null>(null)
   const [prepping, setPrepping] = useState(true)
   const [sending, setSending] = useState(false)
   const [err, setErr] = useState('')
-  const [messages, setMessages] = useState([]) // { role: 'user'|'assistant', text }
+  const [messages, setMessages] = useState<ChatTurn[]>([])
   const [estimated, setEstimated] = useState(false)
-  const [v, setV] = useState(EMPTY)
+  const [v, setV] = useState<Form>(EMPTY)
   const [input, setInput] = useState('')
-  const chatRef = useRef(null)
+  const chatRef = useRef<HTMLDivElement>(null)
 
-  const set = (k) => (e) => setV({ ...v, [k]: e.target.value })
+  const set =
+    (k: keyof Form) =>
+    (e: ChangeEvent<HTMLInputElement>) =>
+      setV({ ...v, [k]: e.target.value })
   const hasKey = !!settings.anthropicKey
 
   // Подготовка фото (ресайз + JPEG). API не вызываем — ждём контекст.
@@ -33,7 +53,9 @@ export default function PhotoSheet({ file, onClose, onAdded }) {
         if (!hasKey) setErr('Не задан ANTHROPIC_API_KEY — заполни поля вручную.')
       })
       .catch(() => alive && setErr('Не удалось прочитать изображение, введи вручную.'))
-      .finally(() => alive && setPrepping(false))
+      .finally(() => {
+        if (alive) setPrepping(false)
+      })
     return () => {
       alive = false
     }
@@ -44,9 +66,9 @@ export default function PhotoSheet({ file, onClose, onAdded }) {
     chatRef.current?.scrollTo({ top: chatRef.current.scrollHeight })
   }, [messages, sending])
 
-  async function send(text) {
+  async function send(text: string) {
     if (sending || !base64 || !hasKey) return
-    const userTurn = { role: 'user', text }
+    const userTurn: ChatTurn = { role: 'user', text }
     const history = [...messages, userTurn]
     setMessages(history)
     setInput('')
@@ -66,7 +88,7 @@ export default function PhotoSheet({ file, onClose, onAdded }) {
     }
   }
 
-  function onSubmit(e) {
+  function onSubmit(e: FormEvent) {
     e.preventDefault()
     const t = input.trim()
     if (t) send(t)
@@ -137,7 +159,11 @@ export default function PhotoSheet({ file, onClose, onAdded }) {
             placeholder={estimated ? 'Уточнить…' : 'Опиши блюдо или порцию'}
             disabled={prepping || sending}
           />
-          <button type="submit" disabled={prepping || sending || !input.trim()} aria-label="Отправить">
+          <button
+            type="submit"
+            disabled={prepping || sending || !input.trim()}
+            aria-label="Отправить"
+          >
             ↑
           </button>
         </form>

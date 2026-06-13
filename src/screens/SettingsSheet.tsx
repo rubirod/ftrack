@@ -1,11 +1,21 @@
-import { useState } from 'react'
-import { useStore } from '../state/store.jsx'
-import Sheet from '../components/Sheet.jsx'
+import { useState, type ChangeEvent } from 'react'
+import { useStore } from '../state/store'
+import Sheet from '../components/Sheet'
+import type { Settings } from '../types'
 
-export default function SettingsSheet({ onClose, forced }) {
+export default function SettingsSheet({
+  onClose,
+  forced,
+}: {
+  onClose: () => void
+  forced: boolean
+}) {
   const { settings, updateSettings, wipe, showToast } = useStore()
-  const [f, setF] = useState(settings)
-  const set = (k) => (e) => setF({ ...f, [k]: e.target.value })
+  const [f, setF] = useState<Settings>(settings)
+  const set =
+    (k: keyof Settings) =>
+    (e: ChangeEvent<HTMLInputElement>) =>
+      setF({ ...f, [k]: e.target.value })
 
   function save() {
     updateSettings({ ...f, calorieTarget: Number(f.calorieTarget) || 2000 })
