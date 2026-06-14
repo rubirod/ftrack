@@ -388,6 +388,30 @@ button {
   border: 1px solid var(--border);
   color: var(--text);
 }
+.select {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 16px;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.link-btn {
+  display: block;
+  margin: 12px 0 0;
+  padding: 0;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  background: none;
+}
 .field input:focus {
   outline: none;
   border-color: var(--accent);

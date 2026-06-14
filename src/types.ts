@@ -65,3 +65,13 @@ export interface ChatTurn {
 
 export type SheetKind = null | 'settings' | 'photo' | 'addDish'
 export type TabKind = 'today' | 'saved' | 'history'
+
+// Metadata API: краткая инфа о базе и таблице для автоподтягивания.
+export interface BaseInfo {
+  id: string
+  name: string
+}
+export interface TableInfo {
+  id: string
+  name: string
+}
